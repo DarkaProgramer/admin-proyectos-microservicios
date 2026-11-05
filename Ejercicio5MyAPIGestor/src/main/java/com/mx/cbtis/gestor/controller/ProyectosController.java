@@ -1,10 +1,9 @@
 package com.mx.cbtis.gestor.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,82 +11,57 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mx.cbtis.gestor.dto.ProyectosDto;
 import com.mx.cbtis.gestor.modelo.Proyectos;
 import com.mx.cbtis.gestor.repository.ProtectosRepository;
 
 @RestController
 public class ProyectosController {
-	
-	@Autowired 
-	ProtectosRepository proyectostable;
-	
-	/*@PostMapping("/buscarProyecto")
-	public Proyectos getProyecto(@RequestBody Proyectos proyecto) {
-		
-		Proyectos buscar = new Proyectos();
-		Optional<Proyectos> proyectos = proyectostable.findById(proyecto.getId_proyecto());
-		if(proyectos.isPresent()) {
-			buscar = proyectos.get();
-		}
-		
-		return buscar;
-	}*/
-	
-	@GetMapping("/buscarProyecto")
-	public Proyectos getProyecto(@RequestParam int id_proyecto) {
-		
-		Proyectos buscar = new Proyectos();
-		Optional<Proyectos> proyecto = proyectostable.findById(id_proyecto);
-		if(proyecto.isPresent()) {
-			buscar = proyecto.get();
-		}
-		
-		return buscar;
-	}
-	
-	@PostMapping("/addProyecto")
-	public int addProyecto(@RequestBody Proyectos proyecto) {
-		
-		int flag = 0;
-		if(proyecto != null) {
-			
-			proyectostable.save(proyecto);
-			flag = 1;
-		}
-		
-		return flag;
-	}
-	
-	@PostMapping("/updateProyecto")
-	public int updateProyecto(@RequestBody Proyectos proyecto) {
-		
-		int flag = 0;
-		if(proyecto != null) {
-			proyectostable.save(proyecto);
-			flag = 1;
-		}
-		
-		return flag;
-	}
-	
-	@DeleteMapping("/deleteProyecto")
-	public int deleteProyecto(@RequestBody Proyectos proyecto) {
-		
-		int flag = 0;
-		if(proyecto != null && proyecto.getId_proyecto() != null && proyectostable.existsById(proyecto.getId_proyecto())) {
-			proyectostable.delete(proyecto);
-			flag = 1;
-		}
-		
-		return flag;
-	}   
-	
-	@PostMapping("/buscarProyectos")
-	public List<Proyectos> getProyectos(){
-		
-		List<Proyectos> listaProyectos = new ArrayList<>();
-		proyectostable.findAll().forEach(listaProyectos :: add);
-		return listaProyectos;
+
+	private final ProtectosRepository proyectostable;
+
+	public ProyectosController(ProtectosRepository proyectostable) {
+		this.proyectostable = proyectostable;
 	}
 
+	@GetMapping("/buscarProyecto")
+	public ProyectosDto getProyecto(@RequestParam int id_proyecto) {
+		Optional<Proyectos> encontrado = proyectostable.findById(id_proyecto);
+		return encontrado.map(ProyectosDto::from).orElseGet(ProyectosDto::new);
+	}
+
+	@PostMapping("/addProyecto")
+	public int addProyecto(@RequestBody ProyectosDto dto) {
+		int flag = 0;
+		if (dto != null) {
+			proyectostable.save(dto.toEntity());
+			flag = 1;
+		}
+		return flag;
+	}
+
+	@PostMapping("/updateProyecto")
+	public int updateProyecto(@RequestBody ProyectosDto dto) {
+		int flag = 0;
+		if (dto != null) {
+			proyectostable.save(dto.toEntity());
+			flag = 1;
+		}
+		return flag;
+	}
+
+	@DeleteMapping("/deleteProyecto")
+	public int deleteProyecto(@RequestBody ProyectosDto dto) {
+		int flag = 0;
+		if (dto != null && dto.getId_proyecto() != null && proyectostable.existsById(dto.getId_proyecto())) {
+			proyectostable.delete(dto.toEntity());
+			flag = 1;
+		}
+		return flag;
+	}
+
+	@PostMapping("/buscarProyectos")
+	public List<ProyectosDto> getProyectos() {
+		return StreamSupport.stream(proyectostable.findAll().spliterator(), false).map(ProyectosDto::from).toList();
+	}
 }

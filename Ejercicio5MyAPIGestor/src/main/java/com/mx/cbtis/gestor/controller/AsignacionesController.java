@@ -1,10 +1,9 @@
 package com.mx.cbtis.gestor.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,70 +11,57 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mx.cbtis.gestor.dto.AsignacionesDto;
 import com.mx.cbtis.gestor.modelo.Asignaciones;
-import com.mx.cbtis.gestor.modelo.Tareas;
 import com.mx.cbtis.gestor.repository.AsignacionesRepository;
 
 @RestController
 public class AsignacionesController {
-	
-	@Autowired
-	AsignacionesRepository asignacionestable;
-	
+
+	private final AsignacionesRepository asignacionestable;
+
+	public AsignacionesController(AsignacionesRepository asignacionestable) {
+		this.asignacionestable = asignacionestable;
+	}
+
 	@GetMapping("/buscarAsignacion")
-	public Asignaciones getAsignacion(@RequestParam int id) {
-		
-		Asignaciones buscar = new Asignaciones();
-		Optional<Asignaciones> asignacion = asignacionestable.findById(id);
-		if(asignacion.isPresent()) {
-			buscar = asignacion.get();
-		}
-		
-		return buscar;
+	public AsignacionesDto getAsignacion(@RequestParam int id) {
+		Optional<Asignaciones> encontrado = asignacionestable.findById(id);
+		return encontrado.map(AsignacionesDto::from).orElseGet(AsignacionesDto::new);
 	}
-	
+
 	@PostMapping("/addAsignacion")
-	public int addAsignacion(@RequestBody Asignaciones asignacion) {
-		
+	public int addAsignacion(@RequestBody AsignacionesDto dto) {
 		int flag = 0;
-		if(asignacion != null) {
-			
-			asignacionestable.save(asignacion);
+		if (dto != null) {
+			asignacionestable.save(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
 	}
-	
+
 	@PostMapping("/updateAsignacion")
-	public int updateAsignacion(@RequestBody Asignaciones asignacion) {
-		
+	public int updateAsignacion(@RequestBody AsignacionesDto dto) {
 		int flag = 0;
-		if(asignacion != null) {
-			asignacionestable.save(asignacion);
+		if (dto != null) {
+			asignacionestable.save(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
 	}
-	
+
 	@DeleteMapping("/deleteAsignacion")
-	public int deleteAsignacion(@RequestBody Asignaciones asignacion) {
-		
+	public int deleteAsignacion(@RequestBody AsignacionesDto dto) {
 		int flag = 0;
-		if(asignacion != null && asignacion.getId_asignacion() != null && asignacionestable.existsById(asignacion.getId_asignacion())) {
-			asignacionestable.delete(asignacion);
+		if (dto != null && dto.getId_asignacion() != null && asignacionestable.existsById(dto.getId_asignacion())) {
+			asignacionestable.delete(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
-	}   
-	
+	}
+
 	@PostMapping("/buscarAsignaciones")
-	public List<Asignaciones> getAsignaciones(){
-		
-		List<Asignaciones> listaAsignaciones = new ArrayList<>();
-		asignacionestable.findAll().forEach(listaAsignaciones :: add);
-		return listaAsignaciones;
+	public List<AsignacionesDto> getAsignaciones() {
+		return StreamSupport.stream(asignacionestable.findAll().spliterator(), false).map(AsignacionesDto::from).toList();
 	}
 }

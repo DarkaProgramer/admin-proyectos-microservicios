@@ -1,10 +1,9 @@
 package com.mx.cbtis.gestor.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,83 +11,69 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mx.cbtis.gestor.dto.UsuarioDto;
 import com.mx.cbtis.gestor.modelo.Usuario;
 import com.mx.cbtis.gestor.repository.UsuarioRepository;
 
 @RestController
 public class UsuarioController {
-	
-	@Autowired
-	UsuarioRepository usuariotable;
-	
+
+	private final UsuarioRepository usuariotable;
+
+	public UsuarioController(UsuarioRepository usuariotable) {
+		this.usuariotable = usuariotable;
+	}
+
 	@PostMapping("/getUsuarioLogin")
-	public Usuario getUsuarioLogin(@RequestBody Usuario userParam) {
-		
+	public UsuarioDto getUsuarioLogin(@RequestBody UsuarioDto userParam) {
 		Optional<Usuario> optionaluser = usuariotable.findByCorreoPass(
-				userParam.getCorreo_electronico(),
-				userParam.getContrasena());
-		
-		Usuario user = new Usuario();
-		
-		if(optionaluser.isPresent()) {
-			user = optionaluser.get();
-		}else {
-			user.setNombre("000");
+				userParam.getCorreo_electronico(), userParam.getContrasena());
+		if (optionaluser.isPresent()) {
+			return UsuarioDto.from(optionaluser.get());
 		}
-		
-		return user;
+		UsuarioDto vacio = new UsuarioDto();
+		vacio.setNombre("000");
+		return vacio;
 	}
-	
+
 	@GetMapping("/buscarUsuario")
-	public Usuario getUsuario(@RequestParam int id) {
-		
-		Usuario buscar = new Usuario();
-		Optional<Usuario> usuario = usuariotable.findById(id);
-		if(usuario.isPresent())
-		{
-			buscar = usuario.get();
-		}
-		
-		return buscar;
+	public UsuarioDto getUsuario(@RequestParam int id) {
+		Optional<Usuario> encontrado = usuariotable.findById(id);
+		return encontrado.map(UsuarioDto::from).orElseGet(UsuarioDto::new);
 	}
-	
+
 	@PostMapping("/addUsuario")
-	public int addUsuario(@RequestBody Usuario usuario) {
+	public int addUsuario(@RequestBody UsuarioDto dto) {
 		int flag = 0;
-		if(usuario != null) {
-			usuariotable.save(usuario);
+		if (dto != null) {
+			usuariotable.save(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
 	}
-	
+
 	@PostMapping("/updateUsuario")
-	public int updateUsuario(@RequestBody Usuario usuario) {
+	public int updateUsuario(@RequestBody UsuarioDto dto) {
 		int flag = 0;
-		if(usuario != null) {
-			usuariotable.save(usuario);
+		if (dto != null) {
+			usuariotable.save(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
 	}
-	
+
 	@DeleteMapping("/deleteUsuario")
-	public int deleteUsuario(@RequestBody Usuario usuario) {
+	public int deleteUsuario(@RequestBody UsuarioDto dto) {
 		int flag = 0;
-		if(usuario != null && usuario.getId_usuario() != null && usuariotable.existsById(usuario.getId_usuario())) {
-			usuariotable.delete(usuario);
+		if (dto != null && dto.getId_usuario() != null && usuariotable.existsById(dto.getId_usuario())) {
+			usuariotable.delete(dto.toEntity());
 			flag = 1;
 		}
-		
 		return flag;
 	}
-	
+
 	@PostMapping("/buscarUsuarios")
-	public List<Usuario> getUsuarios(){
-		List<Usuario> listaUsuarios = new ArrayList<>(); 
-		usuariotable.findAll().forEach(listaUsuarios::add);
-		return listaUsuarios;
-	}		
+	public List<UsuarioDto> getUsuarios() {
+		return StreamSupport.stream(usuariotable.findAll().spliterator(), false).map(UsuarioDto::from).toList();
+	}
 }
