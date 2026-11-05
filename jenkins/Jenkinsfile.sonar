@@ -1,0 +1,32 @@
+// Pipeline: Analisis de codigo con SonarQube (ambos microservicios)
+// Requiere: servidor SonarQube (http://localhost:9000), plugin "SonarQube Scanner for Jenkins",
+// Manage Jenkins > System > SonarQube servers -> nombre "SonarQube" y credencial con el token en 'sonar-token'.
+pipeline {
+  agent any
+  tools { jdk 'JDK21'; maven 'Maven3' }
+  options { timestamps() }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Sonar - Backend') {
+      steps {
+        dir('Ejercicio5MyAPIGestor') {
+          withSonarQubeEnv('SonarQube') {
+            bat 'mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar -Dsonar.projectKey=admin-proyectos-backend -Dsonar.projectName=Ejercicio5MyAPIGestor'
+          }
+        }
+      }
+    }
+    stage('Sonar - Frontend') {
+      steps {
+        dir('Ejercicio5Cliente') {
+          withSonarQubeEnv('SonarQube') {
+            bat 'mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar -Dsonar.projectKey=admin-proyectos-frontend -Dsonar.projectName=Ejercicio5Cliente'
+          }
+        }
+      }
+    }
+    stage('Quality Gate') {
+      steps { timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
+    }
+  }
+}

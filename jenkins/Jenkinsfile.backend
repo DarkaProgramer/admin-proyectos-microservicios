@@ -1,0 +1,32 @@
+// Pipeline: Backend (Ejercicio5MyAPIGestor, puerto 8081)
+// Configurar en Jenkins: Manage Jenkins > Tools -> JDK "JDK21" (C:\Tools\jdk-21.0.13+9) y Maven "Maven3" (C:\Tools\apache-maven-3.10.0)
+pipeline {
+  agent any
+  tools { jdk 'JDK21'; maven 'Maven3' }
+  options { timestamps(); buildDiscarder(logRotator(numToKeepStr: '10')) }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Version de herramientas') {
+      steps { bat 'java -version & mvn -version' }
+    }
+    stage('Compilar') {
+      steps { dir('Ejercicio5MyAPIGestor') { bat 'mvn -B clean compile' } }
+    }
+    stage('Pruebas unitarias') {
+      steps { dir('Ejercicio5MyAPIGestor') { bat 'mvn -B test' } }
+      post { always { junit allowEmptyResults: true, testResults: 'Ejercicio5MyAPIGestor/target/surefire-reports/*.xml' } }
+    }
+    stage('Cobertura JaCoCo') {
+      steps { dir('Ejercicio5MyAPIGestor') { bat 'mvn -B jacoco:report' } }
+      post { always { archiveArtifacts artifacts: 'Ejercicio5MyAPIGestor/target/site/jacoco/**', allowEmptyArchive: true } }
+    }
+    stage('Empaquetar') {
+      steps { dir('Ejercicio5MyAPIGestor') { bat 'mvn -B package -DskipTests' } }
+      post { success { archiveArtifacts artifacts: 'Ejercicio5MyAPIGestor/target/*.jar', allowEmptyArchive: true } }
+    }
+  }
+  post {
+    success { echo 'Pipeline Backend (Ejercicio5MyAPIGestor, puerto 8081): OK' }
+    failure { echo 'Pipeline Backend (Ejercicio5MyAPIGestor, puerto 8081): FALLO' }
+  }
+}
