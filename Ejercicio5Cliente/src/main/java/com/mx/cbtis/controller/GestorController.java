@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -93,20 +94,20 @@ public class GestorController {
 	
 	@PostMapping("/consultarProyectos")
 	public ResponseEntity<Object> consultarProyectos(Model modelo) {
-		
-		RestTemplate template = new RestTemplate();
-		String urlservicebd = "http://localhost:8081/buscarProyectos";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		Proyectos[]  response = template.postForObject(urlservicebd, headers, Proyectos[].class);
-		List<Proyectos> proyectos = Arrays.asList(response);
-		modelo.addAttribute("listaProyectos", proyectos);
-		
-		//ResponseEntity<List<Proyectos>> respuesta = (ResponseEntity<List<Proyectos>>) proyectos;
-		
-		ResponseEntity<Object> objeto = new ResponseEntity<Object>(proyectos, HttpStatusCode.valueOf(200));
-	
-		return objeto;
+		try {
+			RestTemplate template = new RestTemplate();
+			String urlservicebd = "http://localhost:8081/buscarProyectos";
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			Proyectos[] response = template.postForObject(urlservicebd, headers, Proyectos[].class);
+			List<Proyectos> proyectos = Arrays.asList(response);
+			modelo.addAttribute("listaProyectos", proyectos);
+
+			return new ResponseEntity<Object>(proyectos, HttpStatusCode.valueOf(200));
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+					.body("No fue posible consultar los proyectos: el servicio no respondio correctamente.");
+		}
 	}
 	
 	@PostMapping("/eliminarProyecto")
@@ -122,43 +123,35 @@ public class GestorController {
 	
 	@PostMapping ("/actualizarProyecto")
 	public ResponseEntity<Object> updateProyecto(@RequestBody Proyectos proyecto) {
-		RestTemplate  template = new RestTemplate();
-		Map<String,Integer> params = new HashMap<String,Integer>();
-		params.put("id_proyecto", proyecto.getId_proyecto());
-		String urlservicebd = "http://localhost:8081/buscarProyecto?id_proyecto={id_proyecto}";
-		Proyectos proyectos = template.getForObject(urlservicebd, Proyectos.class, params);
-		
-		ResponseEntity<Object> objeto = new ResponseEntity<Object>(proyectos, HttpStatusCode.valueOf(200));
-		
-		return objeto;
+		try {
+			RestTemplate template = new RestTemplate();
+			Map<String,Integer> params = new HashMap<String,Integer>();
+			params.put("id_proyecto", proyecto.getId_proyecto());
+			String urlservicebd = "http://localhost:8081/buscarProyecto?id_proyecto={id_proyecto}";
+			Proyectos proyectos = template.getForObject(urlservicebd, Proyectos.class, params);
+
+			if (proyectos == null || proyectos.getId_proyecto() == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El proyecto solicitado no existe.");
+			}
+
+			return new ResponseEntity<Object>(proyectos, HttpStatusCode.valueOf(200));
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+					.body("No fue posible consultar el proyecto: el servicio no respondio correctamente.");
+		}
 	}
 	
 	
 	@PostMapping("/verificarLogin")
 	public ResponseEntity<Usuario> verificarUsuario(@RequestBody Usuario paramUser) {
 		String urlservicebd = "http://localhost:8081/getUsuarioLogin";
-		RestTemplate  template = new RestTemplate();
-		ResponseEntity<Usuario> response = template.postForEntity(urlservicebd,paramUser,Usuario.class);
-		
-		return response;
-
+		try {
+			RestTemplate template = new RestTemplate();
+			return template.postForEntity(urlservicebd, paramUser, Usuario.class);
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+		}
 	}
-	
-	/*@PostMapping("/obtenerTareas")
-	public ResponseEntity<Object> obtenerTareas(@RequestBody Tareas idProyecto, Model modelo) {
-		String urlservicebd = "http://localhost:8081/getTarea";
-		RestTemplate  template = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		Tareas[] response = template.postForObject(urlservicebd, idProyecto, Tareas[].class);
-		List<Tareas> listaTareas = Arrays.asList(response);
-		modelo.addAttribute("tareas", listaTareas);
-		
-		ResponseEntity<Object> objeto = new ResponseEntity<Object>(listaTareas, HttpStatusCode.valueOf(200));
-	
-		return objeto;
-
-	}*/
 	
 	@PostMapping("/consultarUsuarios")
 	public ResponseEntity<Object> consultarUsuarios(Model modelo) {
@@ -177,27 +170,31 @@ public class GestorController {
 	}
 	
 	@PostMapping("/obtenerTareas")
-		public ResponseEntity<List<Tareas>> obtenerTareas(@RequestBody Tareas idProyecto, Model modelo) {
-	    String urlservicebd = "http://localhost:8081/getTarea";
-	    RestTemplate template = new RestTemplate();
-	    HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    Tareas[] response = template.postForObject(urlservicebd, idProyecto, Tareas[].class);
-	    List<Tareas> listaTareas = Arrays.asList(response);
-	    modelo.addAttribute("tareas", listaTareas);
-	    return ResponseEntity.ok(listaTareas);
+	public ResponseEntity<List<Tareas>> obtenerTareas(@RequestBody Tareas idProyecto, Model modelo) {
+		String urlservicebd = "http://localhost:8081/getTarea";
+		try {
+			RestTemplate template = new RestTemplate();
+			Tareas[] response = template.postForObject(urlservicebd, idProyecto, Tareas[].class);
+			List<Tareas> listaTareas = Arrays.asList(response);
+			modelo.addAttribute("tareas", listaTareas);
+			return ResponseEntity.ok(listaTareas);
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+		}
 	}
 	
 	@PostMapping("/obtenerComentarios")
-		public ResponseEntity<List<Comentarios>> obtenerComentarios(@RequestBody Comentarios idComentario, Model modelo) {
-	    String urlservicebd = "http://localhost:8081/getComentario";
-	    RestTemplate template = new RestTemplate();
-	    HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    Comentarios[] response = template.postForObject(urlservicebd, idComentario, Comentarios[].class);
-	    List<Comentarios> listaComentarios = Arrays.asList(response);
-	    modelo.addAttribute("comentarios", listaComentarios);
-	    return ResponseEntity.ok(listaComentarios);
+	public ResponseEntity<List<Comentarios>> obtenerComentarios(@RequestBody Comentarios idComentario, Model modelo) {
+		String urlservicebd = "http://localhost:8081/getComentario";
+		try {
+			RestTemplate template = new RestTemplate();
+			Comentarios[] response = template.postForObject(urlservicebd, idComentario, Comentarios[].class);
+			List<Comentarios> listaComentarios = Arrays.asList(response);
+			modelo.addAttribute("comentarios", listaComentarios);
+			return ResponseEntity.ok(listaComentarios);
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+		}
 	}
 	
 	//Liliana
@@ -276,10 +273,6 @@ public class GestorController {
 		HttpEntity<Tareas> request = new HttpEntity<Tareas>(tareas);
 		ResponseEntity<Integer> response = template.exchange(urlservicebd, HttpMethod.DELETE,request,Integer.class);
 		
-		/*Map<String,Prestamo> params = new HashMap<String,Prestamo>();
-		params.put("prestamo", prestamo);
-		template.delete(urlservicebd,params);*/
-		
 		return new ModelAndView("redirect:/proyecto");
 	}
 	
@@ -307,7 +300,6 @@ public class GestorController {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		Tareas[]  response = template.postForObject(urlservicebd, headers, Tareas[].class);
 		List<Tareas> tareas = Arrays.asList(response);
-		//ResponseEntity<List<Proyectos>> respuesta = (ResponseEntity<List<Proyectos>>) proyectos;
 		ResponseEntity<Object> objeto = new ResponseEntity<Object>(tareas, HttpStatusCode.valueOf(200));
 		
 		return objeto;
@@ -322,7 +314,6 @@ public class GestorController {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		Comentarios[]  response = template.postForObject(urlservicebd, headers, Comentarios[].class);
 		List<Comentarios> comentarios = Arrays.asList(response);
-		//ResponseEntity<List<Proyectos>> respuesta = (ResponseEntity<List<Proyectos>>) proyectos;
 		ResponseEntity<Object> objeto = new ResponseEntity<Object>(comentarios, HttpStatusCode.valueOf(200));
 		
 		return objeto;
