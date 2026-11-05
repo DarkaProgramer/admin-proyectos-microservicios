@@ -1,0 +1,35 @@
+# Compilados y empaquetados Maven / Java
+target/
+**/target/
+*.class
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Dependencias Node / JS
+node_modules/
+**/node_modules/
+npm-debug.log*
+
+# SonarQube / JaCoCo temporales
+.scannerwork/
+**/.scannerwork/
+
+# IDEs y editores
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.sts4-cache/
+.factorypath
+
+# Sistema operativo y temporales
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.log
+*.tmp
+~$*
