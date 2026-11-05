@@ -33,3 +33,14 @@ Thumbs.db
 *.log
 *.tmp
 ~$*
+
+# Archivos multimedia pesados (>10 MB) para evitar HTTP 408 timeout en GitHub
+Ejercicio5Cliente/src/main/resources/static/Images/animacion9.gif
+Ejercicio5Cliente/src/main/resources/static/Images/animacion10.gif
+Ejercicio5Cliente/src/main/resources/static/Images/fondo.gif
+Ejercicio5Cliente/src/main/resources/static/Images/fondo.png
+Ejercicio5Cliente/src/main/resources/static/Images/fondoLogin.gif
+Ejercicio5Cliente/src/main/resources/static/Images/hola.gif
+Ejercicio5Cliente/src/main/resources/static/Images/manual.mp4
+Ejercicio5Cliente/src/main/resources/static/Images/tutorial.mp4
+
