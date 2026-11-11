@@ -10,7 +10,7 @@
 | **Profesor** | Ramírez Ortiz Enrique |
 | **Repositorio GitHub** | https://github.com/DarkaProgramer/admin-proyectos-microservicios.git |
 | **Microservicios** | 1) `Ejercicio5MyAPIGestor` (Backend API REST - Puerto `8081`)<br>2) `Ejercicio5Cliente` (Frontend + Cliente Web - Puerto `9080`) |
-| **Stack y Versiones** | Java `21.0.13` LTS (Eclipse Temurin), Apache Maven `3.10.0`, Spring Boot `3.2.5` / `2.7.17`, MariaDB, JUnit `5.10.2`, JaCoCo `0.8.11`, Surefire `3.2.5`, SonarScanner `3.11.0.3922` |
+| **Stack y Versiones** | Java `21.0.13` LTS (Eclipse Temurin), Apache Maven `3.10.0`, Spring Boot `3.2.5` / `2.7.17`, MariaDB, JUnit `5.10.2`, JaCoCo `0.8.11`, Surefire `3.2.5`, SonarScanner `5.5.0.6356` |
 
 ---
 
@@ -30,8 +30,8 @@ El sistema Administrador de Proyectos está compuesto por dos microservicios des
 
 | Microservicio | Estado Original (Antes) | Estado Actualizado (Después - Java 21) |
 | :--- | :--- | :--- |
-| **`Ejercicio5Cliente`**<br>(Frontend / BFF - Puerto `9080`) | - Java: `17`<br>- Spring Boot: `3.2.5`<br>- Plugins: `spring-boot`, `surefire 3.2.5`, `jacoco 0.8.11`<br>- Sin `sonar-maven-plugin` ni propiedades Sonar<br>- Sin `argLine` para ByteBuddy en Java 21 | - Java: `21` (`maven.compiler.release = 21`)<br>- Spring Boot: `3.2.5`<br>- Plugins: `spring-boot`, `compiler` (`release 21`), `surefire 3.2.5` (con `argLine`), `jacoco 0.8.11`, `sonar-maven-plugin 3.11.0.3922`<br>- Exclusión `**/target/**` configurada |
-| **`Ejercicio5MyAPIGestor`**<br>(Backend API - Puerto `8081`) | - Java: `11`<br>- Spring Boot: `2.7.17`<br>- Plugins: únicamente `spring-boot-maven-plugin`<br>- Sin Surefire, sin JaCoCo y sin SonarScanner<br>- ByteBuddy `1.12.23` (incompatible con Java 21) | - Java: `21` (`maven.compiler.release = 21`)<br>- Spring Boot: `2.7.17` con ByteBuddy `1.14.13` y JUnit Jupiter `5.10.2`<br>- Plugins: `spring-boot`, `compiler 3.11.0` (`release 21`), `surefire 3.2.5`, `jacoco 0.8.11`, `sonar-maven-plugin 3.11.0.3922`<br>- Exclusión `**/target/**` configurada |
+| **`Ejercicio5Cliente`**<br>(Frontend / BFF - Puerto `9080`) | - Java: `17`<br>- Spring Boot: `3.2.5`<br>- Plugins: `spring-boot`, `surefire 3.2.5`, `jacoco 0.8.11`<br>- Sin `sonar-maven-plugin` ni propiedades Sonar<br>- Sin `argLine` para ByteBuddy en Java 21 | - Java: `21` (`maven.compiler.release = 21`)<br>- Spring Boot: `3.2.5`<br>- Plugins: `spring-boot`, `compiler` (`release 21`), `surefire 3.2.5` (con `argLine`), `jacoco 0.8.11`, `sonar-maven-plugin 5.5.0.6356`<br>- Exclusión `**/target/**` configurada |
+| **`Ejercicio5MyAPIGestor`**<br>(Backend API - Puerto `8081`) | - Java: `11`<br>- Spring Boot: `2.7.17`<br>- Plugins: únicamente `spring-boot-maven-plugin`<br>- Sin Surefire, sin JaCoCo y sin SonarScanner<br>- ByteBuddy `1.12.23` (incompatible con Java 21) | - Java: `21` (`maven.compiler.release = 21`)<br>- Spring Boot: `2.7.17` con ByteBuddy `1.14.13` y JUnit Jupiter `5.10.2`<br>- Plugins: `spring-boot`, `compiler 3.11.0` (`release 21`), `surefire 3.2.5`, `jacoco 0.8.11`, `sonar-maven-plugin 5.5.0.6356`<br>- Exclusión `**/target/**` configurada |
 
 ### Ubicación de los cuatro archivos POM en el repositorio:
 - **POM Original Cliente:** `entrega/poms/original/pom-Ejercicio5Cliente.xml` (y `entrega/poms/original/Ejercicio5Cliente/pom.xml`)
@@ -86,7 +86,7 @@ OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
 | `<junit-jupiter.version>` (en `Ejercicio5MyAPIGestor`) | Actualizado a `5.10.2` y exclusión de `junit-vintage-engine`. | Homologa la plataforma JUnit 5 entre ambos microservicios con `maven-surefire-plugin 3.2.5`. |
 | `maven-surefire-plugin` (`3.2.5`) | Agregado en APIGestor y actualizado en ambos con `<argLine>@{argLine} -javaagent:...byte-buddy-agent.jar</argLine>`. | Ejecuta las pruebas JUnit 5 e inyecta al arranque de la JVM tanto el agente de cobertura JaCoCo (`@{argLine}`) como el agente de ByteBuddy, cumpliendo con JEP 451 de Java 21. |
 | `jacoco-maven-plugin` (`0.8.11`) | Agregado en APIGestor y configurado en ambos con ejecuciones `prepare-agent` y `report` (fase `test`). | JaCoCo `0.8.11` incluye soporte oficial para instrumentar bytecode de Java 21 y genera `target/site/jacoco/index.html` y `jacoco.xml` automáticamente en `mvn test`. |
-| `sonar-maven-plugin` (`3.11.0.3922`) y `<sonar.*>` | Agregado el plugin oficial de SonarScanner y configurado `<sonar.exclusions>**/target/**</sonar.exclusions>`. | Permite ejecutar `mvn sonar:sonar` desde terminal o Jenkins, vinculando el reporte XML de JaCoCo y excluyendo las carpetas compiladas `target`. |
+| `sonar-maven-plugin` (`5.5.0.6356`) y `<sonar.*>` | Agregado el plugin oficial de SonarScanner y configurado `<sonar.exclusions>**/target/**</sonar.exclusions>`. | Permite ejecutar `mvn sonar:sonar` desde terminal o Jenkins, vinculando el reporte XML de JaCoCo y excluyendo las carpetas compiladas `target`. |
 
 ---
 
