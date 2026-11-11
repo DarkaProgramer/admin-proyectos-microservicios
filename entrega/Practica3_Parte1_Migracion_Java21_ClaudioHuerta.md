@@ -5,7 +5,7 @@
 | Campo | Información Oficial |
 | :--- | :--- |
 | **Alumno** | Claudio Angel Huerta Ducoing |
-| **Grupo** | GIDS102 |
+| **Grupo** | GIDS6102 |
 | **Materia** | Gestión del Proceso de Desarrollo de Software |
 | **Profesor** | Ramírez Ortiz Enrique |
 | **Repositorio GitHub** | https://github.com/DarkaProgramer/admin-proyectos-microservicios.git |
