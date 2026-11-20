@@ -1,0 +1,48 @@
+# Despliegue completo: MariaDB + backend (8081) + frontend (9080)
+# Uso:  docker compose up --build
+services:
+  db:
+    image: mariadb:11.3
+    container_name: gestor-db
+    environment:
+      MARIADB_ROOT_PASSWORD: root123
+      MARIADB_DATABASE: dbgestor
+    volumes:
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro   # carga el dump al primer arranque
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  backend:
+    build: ./Ejercicio5MyAPIGestor
+    image: gestor-backend:1.0
+    container_name: gestor-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/dbgestor
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+      JAVA_OPTS: "-Xmx256m"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  frontend:
+    build: ./Ejercicio5Cliente
+    image: gestor-frontend:1.0
+    container_name: gestor-frontend
+    environment:
+      BACKEND_URL: http://backend:8081
+      JAVA_OPTS: "-Xmx256m"
+    depends_on:
+      - backend
+    ports:
+      - "9080:9080"
+
+volumes:
+  db-data:
