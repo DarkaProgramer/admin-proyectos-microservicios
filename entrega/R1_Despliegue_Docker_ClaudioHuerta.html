@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>R1 Unidad 2 - Despliegue Docker y Evidencias - Claudio Huerta</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #222; margin: 40px auto; max-width: 900px; padding: 20px; background: #fff; }
+  h1 { color: #0d47a1; text-align: center; border-bottom: 2px solid #0d47a1; padding-bottom: 10px; }
+  h2 { color: #1565c0; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+  h3 { color: #1e88e5; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+  th { background-color: #f2f7fc; color: #0d47a1; }
+  pre, code { background: #f4f6f8; border: 1px solid #e1e4e8; border-radius: 4px; font-family: Consolas, monospace; }
+  pre { padding: 14px; overflow-x: auto; font-size: 13px; }
+  .badge { background: #28a745; color: white; padding: 3px 8px; border-radius: 3px; font-weight: bold; }
+  .card { background: #fdfdfd; border-left: 4px solid #1565c0; padding: 15px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body>
+
+<h1>INGENIERÍA EN DESARROLLO Y GESTIÓN DE SOFTWARE</h1>
+<h2 style="text-align: center; color: #333; border: none;">EVALUACIÓN DE RECUPERACIÓN R1 — UNIDAD 2</h2>
+<p style="text-align: center; font-style: italic;">Despliegue de Microservicios con Docker Compose (Java 21 LTS) y Compilación de Evidencias</p>
+
+<div class="card">
+  <table>
+    <tr><th>Alumno</th><td>Claudio Angel Huerta Ducoing (Matrícula: 1222100432)</td></tr>
+    <tr><th>Grupo / Materia</th><td>GIDS6102 — Gestión del Proceso de Desarrollo de Software</td></tr>
+    <tr><th>Profesor</th><td>Ramírez Ortiz Enrique</td></tr>
+    <tr><th>Fecha Oficial</th><td>23 de noviembre de 2026</td></tr>
+    <tr><th>Repositorio GitHub</th><td><a href="https://github.com/DarkaProgramer/admin-proyectos-microservicios.git">https://github.com/DarkaProgramer/admin-proyectos-microservicios.git</a></td></tr>
+  </table>
+</div>
+
+<h2>1. Propósito de la Entrega R1</h2>
+<p>De acuerdo con el instrumento de evaluación y la solicitud de Classroom para el <strong>R1 - Unidad 2</strong>, se cumple con los dos puntos solicitados:</p>
+<ol>
+  <li><strong>Despliegue funcional de la aplicación con imágenes Docker</strong> de los microservicios (Frontend <code>Ejercicio5Cliente</code> y Backend <code>Ejercicio5MyAPIGestor</code>) y el motor de base de datos relacional (<code>MariaDB</code> con esquema inicial).</li>
+  <li><strong>Consolidación de la documentación de la Unidad 2:</strong> Práctica 1 (BD y Endpoints), Práctica 2 (Pruebas de Integración y Automáticas con JUnit 5), Práctica 3 Parte 1 (Migración a Java 21, plugins Sonar, JaCoCo y Surefire, 4 POMs) y Práctica 3 Parte 2 (Cobertura 100%, SonarQube sin carpetas <code>target</code> y 3 Pipelines de Jenkins).</li>
+</ol>
+
+<h2>2. Arquitectura de Despliegue con Docker</h2>
+<table>
+  <tr>
+    <th>Servicio</th>
+    <th>Imagen Docker</th>
+    <th>Puerto</th>
+    <th>Función y Variables de Configuración</th>
+  </tr>
+  <tr>
+    <td><strong>Frontend</strong></td>
+    <td><code>gestor-frontend:1.0</code></td>
+    <td><code>9080:9080</code></td>
+    <td>Interfaz Thymeleaf/Bootstrap. Configurado con <code>BACKEND_URL=http://backend:8081</code>.</td>
+  </tr>
+  <tr>
+    <td><strong>Backend</strong></td>
+    <td><code>gestor-backend:1.0</code></td>
+    <td><code>8081:8081</code></td>
+    <td>API REST Spring Boot 2.7 sobre Java 21. Configurado con <code>SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/dbgestor</code>.</td>
+  </tr>
+  <tr>
+    <td><strong>Base de Datos</strong></td>
+    <td><code>mariadb:11.3</code></td>
+    <td><code>3306</code> (interno)</td>
+    <td>MariaDB con inicialización automática mediante volumen <code>./docker/db/init/01-dbgestor.sql</code>.</td>
+  </tr>
+</table>
+
+<h2>3. Dockerfiles Multi-Stage (Compilación Java 21 y Runtime Ligero)</h2>
+<p>Ambos proyectos utilizan <strong>Multi-Stage Build</strong> para garantizar un tamaño mínimo de imagen y máxima seguridad en producción:</p>
+<ul>
+  <li><strong>Etapa 1 (Build):</strong> <code>maven:3.9-eclipse-temurin-21</code> empaqueta el artefacto <code>.jar</code> con Java 21.</li>
+  <li><strong>Etapa 2 (Runtime):</strong> <code>eclipse-temurin:21-jre</code> ejecuta el <code>.jar</code> limitando memoria con <code>-Xmx256m</code>.</li>
+</ul>
+
+<pre><code># Etapa 1: Compilación
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B -q clean package -DskipTests
+
+# Etapa 2: Runtime ligero
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+ENV JAVA_OPTS="-Xmx256m"
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+</code></pre>
+
+<h2>4. Orquestador <code>docker-compose.yml</code></h2>
+<pre><code>services:
+  db:
+    image: mariadb:11.3
+    container_name: gestor-db
+    environment:
+      MARIADB_ROOT_PASSWORD: root123
+      MARIADB_DATABASE: dbgestor
+    volumes:
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  backend:
+    build: ./Ejercicio5MyAPIGestor
+    image: gestor-backend:1.0
+    container_name: gestor-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/dbgestor
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+      JAVA_OPTS: "-Xmx256m"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  frontend:
+    build: ./Ejercicio5Cliente
+    image: gestor-frontend:1.0
+    container_name: gestor-frontend
+    environment:
+      BACKEND_URL: http://backend:8081
+      JAVA_OPTS: "-Xmx256m"
+    depends_on:
+      - backend
+    ports:
+      - "9080:9080"
+
+volumes:
+  db-data:
+</code></pre>
+
+<h2>5. Comandos de Operación y Validación</h2>
+<pre><code># 1. Iniciar los tres contenedores
+docker-compose up --build -d
+
+# 2. Consultar el estado de salud de los servicios
+docker-compose ps
+
+# 3. Acceso en navegador:
+# Frontend: http://localhost:9080 (Usuario: claudio@gmail.com / Pass: 123)
+# Backend:  http://localhost:8081/buscarProyectos (POST)
+
+# 4. Detener contenedores
+docker-compose down
+</code></pre>
+
+<h2>6. Relación de Documentos y Entregables en Classroom</h2>
+<table>
+  <tr><th>Documento / Recurso</th><th>Descripción Técnica</th><th>Estado</th></tr>
+  <tr><td><code>Practica1_BD_Endpoints_ClaudioHuerta.docx</code></td><td>Pruebas de base de datos MariaDB y endpoints REST con casos de éxito y fracaso.</td><td><span class="badge">Listo</span></td></tr>
+  <tr><td><code>Practica2_Integracion_Pruebas_ClaudioHuerta.docx</code></td><td>Pruebas de integración frontend-backend y pruebas automáticas con JUnit 5 y Mockito.</td><td><span class="badge">Listo</span></td></tr>
+  <tr><td><code>Practica3_Parte1_Migracion_Java21_ClaudioHuerta.docx</code></td><td>Migración a Java 21 LTS, configuración de Jenkins (JDK 21 + Maven) y plugins oficiales.</td><td><span class="badge">Listo</span></td></tr>
+  <tr><td><code>Practica3_Parte2_Cobertura_Sonar_Jenkins_ClaudioHuerta.docx</code></td><td>Cobertura JaCoCo al 100%, SonarQube sin carpetas <code>target</code> y 3 pipelines funcionales.</td><td><span class="badge">Listo</span></td></tr>
+  <tr><td><code>entrega/poms/</code></td><td>Los 4 archivos POM: 2 originales y 2 actualizados identificados.</td><td><span class="badge">Listo</span></td></tr>
+  <tr><td><code>R1_Despliegue_Docker_ClaudioHuerta.html</code></td><td>Reporte ejecutivo y técnico del despliegue en contenedores Docker.</td><td><span class="badge">Listo</span></td></tr>
+</table>
+
+</body>
+</html>
