@@ -152,7 +152,8 @@ public class GestorController {
 		String urlservicebd = backendUrl + "/getUsuarioLogin";
 		try {
 			RestTemplate template = new RestTemplate();
-			return template.postForEntity(urlservicebd, paramUser, Usuario.class);
+			ResponseEntity<Usuario> respuesta = template.postForEntity(urlservicebd, paramUser, Usuario.class);
+			return ResponseEntity.ok(respuesta.getBody());
 		} catch (RestClientException e) {
 			System.err.println("Error llamando a " + urlservicebd + ": " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
@@ -302,7 +303,7 @@ public class GestorController {
 		String urlservicebd = backendUrl + "/addTareas";
 		RestTemplate template = new RestTemplate();
 		ResponseEntity<Integer> response = template.postForEntity(urlservicebd, paramName, Integer.class);
-		return response;
+		return ResponseEntity.ok(response.getBody());
 	}
 	
 	@PostMapping("/cambiosTareas")
@@ -310,7 +311,7 @@ public class GestorController {
 		String urlservicebd = backendUrl + "/addTareas";
 		RestTemplate template = new RestTemplate();
 		ResponseEntity<Integer> response = template.postForEntity(urlservicebd, paramDatos, Integer.class);
-		return response;
+		return ResponseEntity.ok(response.getBody());
 	}
 	
 	@PostMapping("/consultarTareas")
