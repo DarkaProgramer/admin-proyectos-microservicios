@@ -237,13 +237,28 @@ public class GestorController {
 	
 	@PostMapping("/saveTarea")
 	public ModelAndView setSaveTareas(@ModelAttribute Tareas tareas) {
-		
-		RestTemplate template = new RestTemplate();
-		String urlservicebd = backendUrl + "/addTareas";
-		ResponseEntity<Integer> response = template.postForEntity(urlservicebd, tareas, Integer.class);
+		if (tareas != null) {
+			if (tareas.getFecha_vencimiento() != null && tareas.getFecha_vencimiento().trim().isEmpty()) {
+				tareas.setFecha_vencimiento(null);
+			}
+			if ("0".equals(tareas.getEstado())) {
+				tareas.setEstado(null);
+			}
+			if ("0".equals(tareas.getLista())) {
+				tareas.setLista("pendientes");
+			}
+		}
+		try {
+			RestTemplate template = new RestTemplate();
+			String urlservicebd = backendUrl + "/addTareas";
+			template.postForEntity(urlservicebd, tareas, Integer.class);
+		} catch (Exception e) {
+			System.err.println("Error al guardar tarea en backend: " + e.getMessage());
+		}
 		ModelAndView mav = new ModelAndView("redirect:/proyecto");
-		mav.addObject("id_proyecto", tareas.getId_proyecto());
-		
+		if (tareas != null && tareas.getId_proyecto() != null) {
+			mav.addObject("id_proyecto", tareas.getId_proyecto());
+		}
 		return mav;
 	}
 	@PostMapping("/saveComentario")

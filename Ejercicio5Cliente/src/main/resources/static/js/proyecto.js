@@ -417,39 +417,51 @@ function verificarComentario(){
 
 function guardarComentario(){
 	var comentario = $('#comentarioT').val();
+	if (!comentario || comentario.trim() === '') {
+		return;
+	}
 	let now = new Date();
-	let day = ('0' + now.getDate()).slice(-2);        // Día del mes (dos dígitos)
-	let month = ('0' + (now.getMonth() + 1)).slice(-2); // Mes (dos dígitos)
-	let year = now.getFullYear().toString().slice(-2); // Año (dos últimos dígitos)
-	let hour = ('0' + now.getHours()).slice(-2);       // Hora (dos dígitos)
-	let minute = ('0' + now.getMinutes()).slice(-2);   // Minutos (dos dígitos)
+	let day = ('0' + now.getDate()).slice(-2);
+	let month = ('0' + (now.getMonth() + 1)).slice(-2);
+	let year = now.getFullYear().toString().slice(-2);
+	let hour = ('0' + now.getHours()).slice(-2);
+	let minute = ('0' + now.getMinutes()).slice(-2);
 	let fecha = `${year}/${month}/${day} ${hour}:${minute}`;
 	
-	var usuarioString = localStorage.getItem("usuario");
-	var usuario = JSON.parse(usuarioString);
+	var nombreUsuario = "Claudio Huerta";
+	try {
+		var usuarioString = localStorage.getItem("usuario");
+		if (usuarioString) {
+			var usuario = JSON.parse(usuarioString);
+			if (usuario && usuario.nombre) {
+				nombreUsuario = usuario.nombre;
+			}
+		}
+	} catch (e) {
+		console.warn("Error leyendo usuario de localStorage", e);
+	}
 	
 	$.ajax({
             url: '/saveComentario',
             contentType: 'application/json',
             data: JSON.stringify({
-                id_tarea: $('#id_tarea').val(), // Obtener el ID de la tarea
+                id_tarea: $('#id_tarea').val(),
                 texto_comentario: comentario,
                 fecha_hora: fecha,
-                id_usuario: usuario.nombre
+                id_usuario: nombreUsuario
             }),
             type: 'POST',
             success: function(response) {
-				
-                // Manejar la respuesta del servidor según sea necesario
                 console.log('Comentario guardado exitosamente');
-                // Puedes actualizar la UI si es necesario
                 var id = document.getElementById("IdProyectoURL").value;
-				var url = `proyecto?id_proyecto=${id}`;
-	            window.location.href= url;
+                if (id) {
+                    window.location.href = `proyecto?id_proyecto=${id}`;
+                } else {
+                    window.location.reload();
+                }
             },
             error: function(error) {
                 console.error('Error al guardar el comentario:', error);
-                // Manejar errores según sea necesario
             }
         }); 
 	

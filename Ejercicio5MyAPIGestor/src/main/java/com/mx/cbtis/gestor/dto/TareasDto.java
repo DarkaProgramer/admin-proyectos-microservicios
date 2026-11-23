@@ -90,9 +90,21 @@ public class TareasDto {
 		e.setId_tarea(getId_tarea());
 		e.setNombre(getNombre());
 		e.setDescripcion(getDescripcion());
-		e.setFecha_vencimiento(getFecha_vencimiento());
-		e.setLista(getLista());
-		e.setEstado(getEstado());
+		String fv = getFecha_vencimiento();
+		if (fv != null && (fv.trim().isEmpty() || "null".equalsIgnoreCase(fv) || "0".equals(fv))) {
+			fv = null;
+		}
+		e.setFecha_vencimiento(fv);
+		String lst = getLista();
+		if (lst != null && "0".equals(lst)) {
+			lst = "pendientes";
+		}
+		e.setLista(lst);
+		String est = getEstado();
+		if (est != null && "0".equals(est)) {
+			est = null;
+		}
+		e.setEstado(est);
 		e.setId_proyecto(getId_proyecto());
 		return e;
 	}
