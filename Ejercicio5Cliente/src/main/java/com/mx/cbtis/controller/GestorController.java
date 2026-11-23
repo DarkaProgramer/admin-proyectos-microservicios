@@ -154,6 +154,7 @@ public class GestorController {
 			RestTemplate template = new RestTemplate();
 			return template.postForEntity(urlservicebd, paramUser, Usuario.class);
 		} catch (RestClientException e) {
+			System.err.println("Error llamando a " + urlservicebd + ": " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
 		}
 	}

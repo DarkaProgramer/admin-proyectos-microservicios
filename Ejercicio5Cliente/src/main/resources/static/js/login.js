@@ -44,6 +44,10 @@ function validarLogin(){
 					localStorage.setItem("usuario", JSON.stringify(data));
 					window.location.href = 'inicio';
 				}
+			},
+			error: function(xhr){
+				console.error('Error en login', xhr.status, xhr.responseText);
+				alert('No se pudo iniciar sesion (codigo ' + xhr.status + '). Si el servidor estaba dormido, espera 1 minuto e intenta de nuevo.');
 			}
 		});
 	}
