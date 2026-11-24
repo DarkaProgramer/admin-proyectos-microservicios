@@ -1,0 +1,25 @@
+                   
+                   
+┌─────────────────┐
+│ 2 Code Findings │
+└─────────────────┘
+                                                                    
+    /src/Ejercicio5Cliente/src/main/resources/application.properties
+    ❯❱ java.spring.security.audit.spring-actuator-non-health-enabled.spring-actuator-dangerous-endpoints-enabled
+          ❰❰ Blocking ❱❱
+          Spring Boot Actuators "health,info,prometheus" are enabled. Depending on the actuators, this can
+          pose a significant security risk. Please double-check if the actuators are needed and properly  
+          secured.                                                                                        
+          Details: https://sg.run/5g23                                                                    
+                                                                                                          
+            7┆ management.endpoints.web.exposure.include=health,info,prometheus
+                                                                        
+    /src/Ejercicio5MyAPIGestor/src/main/resources/application.properties
+    ❯❱ java.spring.security.audit.spring-actuator-non-health-enabled.spring-actuator-dangerous-endpoints-enabled
+          ❰❰ Blocking ❱❱
+          Spring Boot Actuators "health,info,prometheus" are enabled. Depending on the actuators, this can
+          pose a significant security risk. Please double-check if the actuators are needed and properly  
+          secured.                                                                                        
+          Details: https://sg.run/5g23                                                                    
+                                                                                                          
+           11┆ management.endpoints.web.exposure.include=health,info,prometheus

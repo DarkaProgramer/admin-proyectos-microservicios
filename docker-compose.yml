@@ -44,5 +44,48 @@ services:
     ports:
       - "9080:9080"
 
+  # ---------- Unidad III: monitoreo ----------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gestor-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gestor-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+
+  # ---------- Unidad III: prueba de carga (solo con --profile load) ----------
+  k6:
+    image: grafana/k6:latest
+    container_name: gestor-k6
+    profiles: ["load"]
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      FRONT_URL: http://frontend:9080
+      BACK_URL: http://backend:8081
+    volumes:
+      - ./k6:/scripts:ro
+      - ./evidencia-u3:/results
+    command: run /scripts/prueba-carga.js --summary-export=/results/k6-resumen.json
+
 volumes:
   db-data:

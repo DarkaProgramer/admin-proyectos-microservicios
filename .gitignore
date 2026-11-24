@@ -48,3 +48,10 @@ Ejercicio5Cliente/src/main/resources/static/Images/tutorial.mp4
 
 *.docx
 
+
+# Terraform (el estado y las variables contienen secretos)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/crash.log

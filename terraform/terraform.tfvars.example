@@ -1,0 +1,6 @@
+# Copia este archivo como terraform.tfvars y llena tus datos.
+# terraform.tfvars esta en .gitignore: NO se sube a GitHub.
+render_owner_id = "tea-xxxxxxxxxxxxxxxxxxxx"
+tidb_host       = "gateway01.xxxxxx.prod.aws.tidbcloud.com"
+tidb_user       = "xxxxxxxx.root"
+tidb_password   = "CAMBIAR"

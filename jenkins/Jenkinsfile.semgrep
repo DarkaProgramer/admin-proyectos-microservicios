@@ -1,0 +1,19 @@
+// Pipeline: SAST con Semgrep (ambos microservicios)
+// Requiere Docker Desktop corriendo en la misma maquina que Jenkins.
+pipeline {
+  agent any
+  options { timestamps() }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Semgrep SAST') {
+      steps {
+        bat 'docker run --rm -v "%WORKSPACE%:/src" semgrep/semgrep semgrep scan --config p/java --config p/owasp-top-ten --metrics=off --text-output=/src/semgrep-reporte.txt --json-output=/src/semgrep-reporte.json /src/Ejercicio5MyAPIGestor/src /src/Ejercicio5Cliente/src'
+      }
+      post { always { archiveArtifacts artifacts: 'semgrep-reporte.*', allowEmptyArchive: true } }
+    }
+  }
+  post {
+    success { echo 'Pipeline Semgrep: OK (revisar reporte archivado)' }
+    failure { echo 'Pipeline Semgrep: FALLO' }
+  }
+}

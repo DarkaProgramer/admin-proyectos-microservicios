@@ -1,0 +1,30 @@
+# Blueprint de Render (IaC nativa de Render). Alternativa a terraform/.
+# Uso: Render Dashboard > New > Blueprint > elegir este repositorio.
+services:
+  - type: web
+    name: gestor-backend-bp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Ejercicio5MyAPIGestor/Dockerfile
+    dockerContext: ./Ejercicio5MyAPIGestor
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JAVA_OPTS
+        value: -Xmx300m -XX:MaxMetaspaceSize=128m -XX:+UseSerialGC -Xss512k
+  - type: web
+    name: gestor-frontend-bp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Ejercicio5Cliente/Dockerfile
+    dockerContext: ./Ejercicio5Cliente
+    envVars:
+      - key: BACKEND_URL
+        sync: false
+      - key: JAVA_OPTS
+        value: -Xmx300m -XX:MaxMetaspaceSize=128m -XX:+UseSerialGC -Xss512k
