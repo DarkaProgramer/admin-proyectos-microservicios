@@ -1,0 +1,58 @@
+# Monitoreo de disponibilidad y latencia de los servicios desplegados en Render.
+# Se ejecuta cada 30 minutos y a mano. Si algo falla, el workflow queda en rojo y GitHub avisa por correo.
+name: Monitoreo en la nube
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  BACK_URL: ${{ vars.BACK_URL || 'https://gestor-iac-backend.onrender.com' }}
+  FRONT_URL: ${{ vars.FRONT_URL || 'https://gestor-iac-frontend.onrender.com' }}
+
+jobs:
+  salud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar servicios (reintenta por el arranque en frio de Render)
+        id: check
+        run: |
+          check() {
+            name="$1"; url="$2"; ok=0
+            for i in 1 2 3 4 5 6; do
+              out=$(curl -s -o /dev/null -w "%{http_code} %{time_total}" --max-time 60 "$url" || echo "000 0")
+              code=${out% *}; t=${out#* }
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "$name intento $i: HTTP $code"; sleep 20
+            done
+            ms=$(awk -v t="$t" 'BEGIN{printf "%d", t*1000}')
+            if [ $ok -eq 1 ]; then
+              echo "| $name | UP | $ms ms |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $name | DOWN | HTTP $code |" >> "$GITHUB_STEP_SUMMARY"; FAIL=1
+            fi
+          }
+          echo "### Estado de los servicios" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Servicio | Estado | Latencia |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          FAIL=0
+          check "backend /actuator/health" "$BACK_URL/actuator/health"
+          check "frontend /actuator/health" "$FRONT_URL/actuator/health"
+          check "frontend /login" "$FRONT_URL/login"
+          exit $FAIL
+      - name: Abrir incidencia si hubo caida
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Caida detectada por el monitoreo';
+            const open = await github.rest.issues.listForRepo({owner: context.repo.owner, repo: context.repo.repo, state: 'open', labels: 'monitoreo'});
+            if (open.data.length === 0) {
+              await github.rest.issues.create({owner: context.repo.owner, repo: context.repo.repo, title, labels: ['monitoreo'],
+                body: `El monitoreo no obtuvo respuesta 200. Revisa la ejecucion: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`});
+            }

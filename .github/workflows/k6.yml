@@ -1,0 +1,25 @@
+# Prueba de carga con k6 contra el entorno de la nube (manual: gasta horas del plan gratis de Render)
+name: Prueba de carga k6
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Ejecutar k6
+        env:
+          FRONT_URL: ${{ vars.FRONT_URL || 'https://gestor-iac-frontend.onrender.com' }}
+          BACK_URL: ${{ vars.BACK_URL || 'https://gestor-iac-backend.onrender.com' }}
+        run: k6 run --summary-export=k6-resumen.json k6/prueba-carga.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-resumen
+          path: k6-resumen.json

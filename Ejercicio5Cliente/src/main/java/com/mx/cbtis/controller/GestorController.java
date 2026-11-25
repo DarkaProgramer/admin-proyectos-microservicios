@@ -264,13 +264,16 @@ public class GestorController {
 		return mav;
 	}
 	@PostMapping("/saveComentario")
-	public String setSaveComentario(@RequestBody Comentarios comentarios) {
-		
-		RestTemplate template = new RestTemplate();
-		String urlservicebd = backendUrl + "/addComentario";
-		ResponseEntity<Integer> response = template.postForEntity(urlservicebd, comentarios, Integer.class); 
-		
-		return "proyecto";
+	public ResponseEntity<Object> setSaveComentario(@RequestBody Comentarios comentarios) {
+		try {
+			RestTemplate template = new RestTemplate();
+			String urlservicebd = backendUrl + "/addComentario";
+			ResponseEntity<Integer> response = template.postForEntity(urlservicebd, comentarios, Integer.class);
+			return ResponseEntity.ok(response.getBody());
+		} catch (RestClientException e) {
+			return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+					.body("No fue posible guardar el comentario: el servicio no respondio correctamente.");
+		}
 	}
 	
 	

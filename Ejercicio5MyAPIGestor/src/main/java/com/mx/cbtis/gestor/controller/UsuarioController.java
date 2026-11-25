@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.mx.cbtis.gestor.dto.UsuarioDto;
 import com.mx.cbtis.gestor.modelo.Usuario;
@@ -39,17 +41,25 @@ public class UsuarioController {
 	@GetMapping("/buscarUsuario")
 	public UsuarioDto getUsuario(@RequestParam int id) {
 		Optional<Usuario> encontrado = usuariotable.findById(id);
-		return encontrado.map(UsuarioDto::from).orElseGet(UsuarioDto::new);
+		return encontrado.map(UsuarioDto::from)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 	}
 
 	@PostMapping("/addUsuario")
 	public int addUsuario(@RequestBody UsuarioDto dto) {
 		int flag = 0;
 		if (dto != null) {
+			if (estaVacio(dto.getNombre()) && estaVacio(dto.getCorreo_electronico())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario debe tener nombre o correo");
+			}
 			usuariotable.save(dto.toEntity());
 			flag = 1;
 		}
 		return flag;
+	}
+
+	private static boolean estaVacio(String texto) {
+		return texto == null || texto.isBlank();
 	}
 
 	@PostMapping("/updateUsuario")

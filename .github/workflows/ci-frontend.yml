@@ -1,0 +1,54 @@
+# CI del frontend (Ejercicio5Cliente). Reemplaza jenkins/Jenkinsfile.frontend
+name: CI Frontend
+
+on:
+  push:
+    branches: [main]
+    paths: ['Ejercicio5Cliente/**', '.github/workflows/ci-frontend.yml']
+  pull_request:
+    paths: ['Ejercicio5Cliente/**', '.github/workflows/ci-frontend.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Ejercicio5Cliente
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar, probar y generar cobertura (JaCoCo)
+        run: mvn -B clean verify
+      - name: Resumen de pruebas
+        if: always()
+        run: |
+          echo "### Frontend: resultado de pruebas" >> "$GITHUB_STEP_SUMMARY"
+          grep -h "Tests run:" target/surefire-reports/*.txt 2>/dev/null | awk '{t+=$3; f+=$5; e+=$7} END {print "Pruebas: " t ", fallas: " f ", errores: " e}' >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Guardar reporte JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-frontend
+          path: Ejercicio5Cliente/target/site/jacoco/
+          if-no-files-found: ignore
+      - name: Guardar reportes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-frontend
+          path: Ejercicio5Cliente/target/surefire-reports/
+          if-no-files-found: ignore
+      - name: Guardar el .jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-frontend
+          path: Ejercicio5Cliente/target/*.jar
+          if-no-files-found: ignore

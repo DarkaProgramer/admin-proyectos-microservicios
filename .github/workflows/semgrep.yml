@@ -1,0 +1,35 @@
+# SAST con Semgrep. Reemplaza jenkins/Jenkinsfile.semgrep
+name: Semgrep SAST
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Escaneo (reglas Java y OWASP Top 10)
+        run: >
+          semgrep scan --config p/java --config p/owasp-top-ten --metrics=off
+          --text-output=semgrep-reporte.txt --json-output=semgrep-reporte.json
+          Ejercicio5MyAPIGestor/src Ejercicio5Cliente/src
+        continue-on-error: true
+      - name: Resumen
+        run: |
+          echo "### Semgrep" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          head -c 6000 semgrep-reporte.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-reporte
+          path: semgrep-reporte.*

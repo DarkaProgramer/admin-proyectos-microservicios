@@ -260,8 +260,21 @@ public class GestorControllerTest {
         try (MockedConstruction<RestTemplate> mc = mockConstruction(RestTemplate.class,
                 (rt, ctx) -> when(rt.postForEntity(eq("http://localhost:8081/addComentario"), any(), eq(Integer.class)))
                         .thenReturn(ResponseEntity.ok(1)))) {
-            String viewName = controller.setSaveComentario(comentario);
-            assertEquals("proyecto", viewName);
+            ResponseEntity<Object> response = controller.setSaveComentario(comentario);
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertEquals(1, response.getBody());
+        }
+    }
+
+    @Test
+    public void testSetSaveComentarioBackendConError() {
+        Comentarios comentario = new Comentarios();
+
+        try (MockedConstruction<RestTemplate> mc = mockConstruction(RestTemplate.class,
+                (rt, ctx) -> when(rt.postForEntity(eq("http://localhost:8081/addComentario"), any(), eq(Integer.class)))
+                        .thenThrow(new org.springframework.web.client.ResourceAccessException("conexion rechazada")))) {
+            ResponseEntity<Object> response = controller.setSaveComentario(comentario);
+            assertEquals(HttpStatus.BAD_GATEWAY, response.getStatusCode());
         }
     }
 

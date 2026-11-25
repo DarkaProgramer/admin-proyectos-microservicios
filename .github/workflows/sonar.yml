@@ -1,0 +1,51 @@
+# Analisis de calidad con SonarQube Cloud (un solo proyecto, ambos microservicios).
+# Reemplaza jenkins/Jenkinsfile.sonar
+# Requiere: secreto SONAR_TOKEN y variables de repositorio SONAR_ORGANIZATION y SONAR_PROJECT_KEY
+# (ver docs/PLAN_MONITOREO.md). Debe estar DESACTIVADO el "Automatic Analysis" del proyecto en SonarQube Cloud.
+name: SonarQube Cloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verificar secreto y variables
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          ORG: ${{ vars.SONAR_ORGANIZATION }}
+          KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        run: |
+          test -n "$SONAR_TOKEN" || { echo "::error::Falta el secreto SONAR_TOKEN"; exit 1; }
+          test -n "$ORG" || { echo "::error::Falta la variable SONAR_ORGANIZATION"; exit 1; }
+          test -n "$KEY" || { echo "::error::Falta la variable SONAR_PROJECT_KEY"; exit 1; }
+      - name: Pruebas y cobertura del backend
+        run: mvn -B -f Ejercicio5MyAPIGestor/pom.xml clean verify
+      - name: Pruebas y cobertura del frontend
+        run: mvn -B -f Ejercicio5Cliente/pom.xml clean verify
+      - name: Analisis en SonarQube Cloud (espera el Quality Gate)
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.qualitygate.wait=true

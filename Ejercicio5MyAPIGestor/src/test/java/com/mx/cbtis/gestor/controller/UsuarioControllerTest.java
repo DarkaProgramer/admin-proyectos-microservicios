@@ -83,13 +83,9 @@ class UsuarioControllerTest {
 	}
 
 	@Test
-	void buscar_inexistente_devuelveEntidadVacia() throws Exception {
+	void buscar_inexistente_devuelve404() throws Exception {
 		when(repo.findById(99)).thenReturn(Optional.empty());
-		String body = mvc.perform(get("/buscarUsuario").param("id", "99"))
-				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-		Usuario r = json.readValue(body, Usuario.class);
-		assertNull(r.getId_usuario());
-		assertNull(r.getNombre());
+		mvc.perform(get("/buscarUsuario").param("id", "99")).andExpect(status().isNotFound());
 	}
 
 	@Test
@@ -125,6 +121,13 @@ class UsuarioControllerTest {
 		mvc.perform(post("/addUsuario").contentType(MediaType.APPLICATION_JSON).content("{no es json"))
 				.andExpect(status().isBadRequest());
 		verifyNoInteractions(repo);
+	}
+
+	@Test
+	void agregar_cuerpoVacio_devuelve400SinGuardar() throws Exception {
+		mvc.perform(post("/addUsuario").contentType(MediaType.APPLICATION_JSON).content("{}"))
+				.andExpect(status().isBadRequest());
+		verify(repo, never()).save(any());
 	}
 
 	@Test
