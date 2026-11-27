@@ -7,8 +7,11 @@ RUN mvn -B -q clean package -DskipTests
 
 # ---------- Etapa 2: imagen final ligera con solo el JRE 21 ----------
 FROM eclipse-temurin:21-jre
+# Se ejecuta con un usuario sin privilegios (no root).
+RUN groupadd --system app && useradd --system --gid app --no-create-home app
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=app:app /app/target/*.jar app.jar
+USER app
 ENV JAVA_OPTS="-Xmx256m"
 EXPOSE 8081
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

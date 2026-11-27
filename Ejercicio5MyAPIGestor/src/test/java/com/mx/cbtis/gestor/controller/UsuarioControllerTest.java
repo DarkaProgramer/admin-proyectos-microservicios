@@ -131,6 +131,29 @@ class UsuarioControllerTest {
 	}
 
 	@Test
+	void agregar_soloNombre_guarda() throws Exception {
+		mvc.perform(post("/addUsuario").contentType(MediaType.APPLICATION_JSON).content("{\"nombre\":\"Ana\"}"))
+				.andExpect(status().isOk()).andExpect(content().string("1"));
+		verify(repo).save(any());
+	}
+
+	@Test
+	void agregar_soloCorreo_guarda() throws Exception {
+		mvc.perform(post("/addUsuario").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nombre\":\"  \",\"correo_electronico\":\"ana@cbtis75.edu.mx\"}"))
+				.andExpect(status().isOk()).andExpect(content().string("1"));
+		verify(repo).save(any());
+	}
+
+	@Test
+	void agregar_nombreYCorreoEnBlanco_devuelve400SinGuardar() throws Exception {
+		mvc.perform(post("/addUsuario").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nombre\":\"  \",\"correo_electronico\":\"\"}"))
+				.andExpect(status().isBadRequest());
+		verify(repo, never()).save(any());
+	}
+
+	@Test
 	void agregar_nulo_devuelve0SinGuardar() {
 		assertEquals(0, controller.addUsuario(null));
 		verify(repo, never()).save(any());
