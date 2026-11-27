@@ -52,3 +52,16 @@ variable "java_opts" {
   type    = string
   default = "-Xmx300m -XX:MaxMetaspaceSize=128m -XX:+UseSerialGC -Xss512k"
 }
+
+variable "grafana_admin_password" {
+  description = "Contrasena del usuario admin de Grafana (practica escolar, sin datos reales)."
+  type        = string
+  sensitive   = true
+  default     = "gestor-grafana-2026"
+}
+
+variable "render_environment_id" {
+  description = "ID del entorno de Render (proyecto Gestor-Admin, Production) donde viven los servicios."
+  type        = string
+  default     = "evm-dc2sufek1f9s73917cjg"
+}
