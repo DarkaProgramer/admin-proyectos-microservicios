@@ -34,8 +34,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_vus",
-          "legendFormat": "{{testid}}"
+          "expr": "max by (testid) (k6_vus)",
+          "legendFormat": "VUs {{testid}}"
         }
       ]
     },
@@ -70,7 +70,7 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "Latencia p95 (ms)",
+      "title": "Latencia p95",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -83,22 +83,22 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ms"
+          "unit": "s"
         },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_http_req_duration_p95",
-          "legendFormat": "{{testid}}"
+          "expr": "max by (testid) (k6_http_req_duration_p95)",
+          "legendFormat": "p95 {{testid}}"
         }
       ]
     },
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Latencia promedio y maxima (ms)",
+      "title": "Latencia promedio y maxima",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -111,19 +111,19 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ms"
+          "unit": "s"
         },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_http_req_duration_avg",
+          "expr": "max by (testid) (k6_http_req_duration_avg)",
           "legendFormat": "promedio {{testid}}"
         },
         {
           "refId": "B",
-          "expr": "k6_http_req_duration_max",
+          "expr": "max by (testid) (k6_http_req_duration_max)",
           "legendFormat": "maximo {{testid}}"
         }
       ]
@@ -144,15 +144,17 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_http_req_failed_rate",
-          "legendFormat": "{{testid}}"
+          "expr": "max by (testid) (k6_http_req_failed_rate)",
+          "legendFormat": "errores {{testid}}"
         }
       ]
     },
@@ -172,15 +174,17 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "k6_checks_rate",
-          "legendFormat": "{{testid}}"
+          "expr": "min by (testid) (k6_checks_rate)",
+          "legendFormat": "checks {{testid}}"
         }
       ]
     }
